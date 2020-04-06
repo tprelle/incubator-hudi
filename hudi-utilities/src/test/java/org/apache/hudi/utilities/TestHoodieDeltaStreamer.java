@@ -265,14 +265,14 @@ public class TestHoodieDeltaStreamer extends UtilitiesTestBase {
     }
 
     static void assertDistanceCount(long expected, String tablePath, SQLContext sqlContext) {
-      sqlContext.read().format("org.apache.hudi").load(tablePath).registerTempTable("tmp_trips");
+      sqlContext.read().format("org.apache.hudi").load(tablePath).createOrReplaceTempView("tmp_trips");
       long recordCount =
           sqlContext.sparkSession().sql("select * from tmp_trips where haversine_distance is not NULL").count();
       assertEquals(expected, recordCount);
     }
 
     static void assertDistanceCountWithExactValue(long expected, String tablePath, SQLContext sqlContext) {
-      sqlContext.read().format("org.apache.hudi").load(tablePath).registerTempTable("tmp_trips");
+      sqlContext.read().format("org.apache.hudi").load(tablePath).createOrReplaceTempView("tmp_trips");
       long recordCount =
           sqlContext.sparkSession().sql("select * from tmp_trips where haversine_distance = 1.0").count();
       assertEquals(expected, recordCount);

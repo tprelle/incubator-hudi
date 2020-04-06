@@ -26,7 +26,7 @@ import org.apache.hudi.common.table.HoodieTableMetaClient
 import org.apache.hudi.common.table.view.HoodieTableFileSystemView
 import org.apache.hudi.exception.HoodieException
 import org.apache.log4j.Logger
-import org.apache.spark.sql.{DataFrame, SQLContext}
+import org.apache.spark.sql.{DataFrame, SQLContext, SparkSession}
 
 import scala.collection.JavaConversions._
 import scala.collection.mutable._
@@ -38,11 +38,11 @@ import scala.collection.mutable._
 class DedupeSparkJob(basePath: String,
                      duplicatedPartitionPath: String,
                      repairOutputPath: String,
-                     sqlContext: SQLContext,
+                     sparkSession: SparkSession,
                      fs: FileSystem) {
 
 
-  val sparkHelper = new SparkHelper(sqlContext, fs)
+  val sparkHelper = new SparkHelper(sparkSession, fs)
   val LOG = Logger.getLogger(this.getClass)
 
 
@@ -60,7 +60,7 @@ class DedupeSparkJob(basePath: String,
       group by `${HoodieRecord.RECORD_KEY_METADATA_FIELD}`
       having dupe_cnt > 1
       """
-    sqlContext.sql(dupeSql)
+    sparkSession.sql(dupeSql)
   }
 
 
@@ -84,10 +84,10 @@ class DedupeSparkJob(basePath: String,
     val filteredStatuses = latestFiles.map(f => f.getPath)
     LOG.info(s" List of files under partition: ${} =>  ${filteredStatuses.mkString(" ")}")
 
-    val df = sqlContext.parquetFile(filteredStatuses: _*)
-    df.registerTempTable(tmpTableName)
+    val df = sparkSession.read.parquet(filteredStatuses: _*)
+    df.createOrReplaceTempView(tmpTableName)
     val dupeKeyDF = getDupeKeyDF(tmpTableName)
-    dupeKeyDF.registerTempTable(dedupeTblName)
+    dupeKeyDF.createOrReplaceTempView(dedupeTblName)
 
     // Obtain necessary satellite information for duplicate rows
     val dupeDataSql =
@@ -97,7 +97,7 @@ class DedupeSparkJob(basePath: String,
         JOIN $dedupeTblName d
         ON h.`_hoodie_record_key` = d.dupe_key
                       """
-    val dupeMap = sqlContext.sql(dupeDataSql).collectAsList().groupBy(r => r.getString(0))
+    val dupeMap = sparkSession.sql(dupeDataSql).collectAsList().groupBy(r => r.getString(0))
     val fileToDeleteKeyMap = new HashMap[String, HashSet[String]]()
 
     // Mark all files except the one with latest commits for deletion
@@ -156,8 +156,8 @@ class DedupeSparkJob(basePath: String,
     }
 
     // 3. Check that there are no duplicates anymore.
-    val df = sqlContext.read.parquet(s"$repairOutputPath/*.parquet")
-    df.registerTempTable("fixedTbl")
+    val df = sparkSession.read.parquet(s"$repairOutputPath/*.parquet")
+    df.createOrReplaceTempView("fixedTbl")
     val dupeKeyDF = getDupeKeyDF("fixedTbl")
     val dupeCnt = dupeKeyDF.count()
     if (dupeCnt != 0) {

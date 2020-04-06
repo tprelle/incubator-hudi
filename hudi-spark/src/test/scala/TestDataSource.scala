@@ -21,7 +21,7 @@ import org.apache.hudi.common.fs.FSUtils
 import org.apache.hudi.config.HoodieWriteConfig
 import org.apache.hudi.{DataSourceReadOptions, DataSourceWriteOptions, HoodieDataSourceHelpers}
 import org.apache.spark.sql._
-import org.apache.spark.sql.streaming.{OutputMode, ProcessingTime}
+import org.apache.spark.sql.streaming.{OutputMode, Trigger}
 import org.apache.spark.sql.functions.col
 import org.junit.Assert._
 import org.junit.rules.TemporaryFolder
@@ -237,7 +237,7 @@ class TestDataSource extends AssertionsForJUnit {
         .writeStream
         .format("org.apache.hudi")
         .options(commonOpts)
-        .trigger(new ProcessingTime(100))
+        .trigger(Trigger.ProcessingTime(100))
         .option("checkpointLocation", basePath + "/checkpoint")
         .outputMode(OutputMode.Append)
         .start(destPath)

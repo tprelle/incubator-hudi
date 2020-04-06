@@ -37,7 +37,7 @@ import org.apache.parquet.avro.AvroParquetWriter;
 import org.apache.parquet.hadoop.ParquetWriter;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaSparkContext;
-import org.apache.spark.sql.SQLContext;
+import org.apache.spark.sql.SparkSession;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -136,9 +136,9 @@ public class TestHDFSParquetImporter implements Serializable {
         isCommitFilePresent = isCommitFilePresent || f.getPath().toString().endsWith(HoodieTimeline.COMMIT_EXTENSION);
 
         if (f.getPath().toString().endsWith("parquet")) {
-          SQLContext sc = new SQLContext(jsc);
+          SparkSession sparkSession = SparkSession.builder().sparkContext(jsc.sc()).getOrCreate();
           String partitionPath = f.getPath().getParent().toString();
-          long count = sc.read().parquet(f.getPath().toString()).count();
+          long count = sparkSession.read().parquet(f.getPath().toString()).count();
           if (!recordCounts.containsKey(partitionPath)) {
             recordCounts.put(partitionPath, 0L);
           }

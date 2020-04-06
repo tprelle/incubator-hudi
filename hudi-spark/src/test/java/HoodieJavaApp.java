@@ -210,7 +210,7 @@ public class HoodieJavaApp {
         // pass any path glob, can include hoodie & non-hoodie
         // datasets
         .load(tablePath + (nonPartitionedTable ? "/*" : "/*/*/*/*"));
-    snapshotQueryDF.registerTempTable("hoodie_ro");
+    snapshotQueryDF.createOrReplaceTempView("hoodie_ro");
     spark.sql("describe hoodie_ro").show();
     // all trips whose fare amount was greater than 2.
     spark.sql("select fare.amount, begin_lon, begin_lat, timestamp from hoodie_ro where fare.amount > 2.0").show();

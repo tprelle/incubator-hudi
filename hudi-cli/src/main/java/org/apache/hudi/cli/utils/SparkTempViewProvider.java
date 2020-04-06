@@ -22,12 +22,10 @@ import org.apache.hudi.exception.HoodieException;
 
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
-import org.apache.spark.SparkConf;
-import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.RowFactory;
-import org.apache.spark.sql.SQLContext;
+import org.apache.spark.sql.SparkSession;
 import org.apache.spark.sql.types.DataType;
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructType;
@@ -38,17 +36,14 @@ import java.util.stream.Collectors;
 public class SparkTempViewProvider implements TempViewProvider {
   private static final Logger LOG = LogManager.getLogger(SparkTempViewProvider.class);
 
-  private JavaSparkContext jsc;
-  private SQLContext sqlContext;
+  private SparkSession sparkSession;
 
   public SparkTempViewProvider(String appName) {
     try {
-      SparkConf sparkConf = new SparkConf().setAppName(appName)
-              .set("spark.serializer", "org.apache.spark.serializer.KryoSerializer").setMaster("local[8]");
-      jsc = new JavaSparkContext(sparkConf);
-      jsc.setLogLevel("ERROR");
-
-      sqlContext = new SQLContext(jsc);
+      sparkSession = SparkSession.builder().appName(appName)
+              .config("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
+              .master("local[8]").getOrCreate();
+      sparkSession.sparkContext().setLogLevel("ERROR");
     } catch (Throwable ex) {
       // log full stack trace and rethrow. Without this its difficult to debug failures, if any
       LOG.error("unable to initialize spark context ", ex);
@@ -80,7 +75,7 @@ public class SparkTempViewProvider implements TempViewProvider {
       }
       List<Row> records = rows.stream().map(row -> RowFactory.create(row.toArray(new Comparable[row.size()])))
               .collect(Collectors.toList());
-      Dataset<Row> dataset = this.sqlContext.createDataFrame(records, structType);
+      Dataset<Row> dataset = this.sparkSession.createDataFrame(records, structType);
       dataset.createOrReplaceTempView(tableName);
       System.out.println("Wrote table view: " + tableName);
     } catch (Throwable ex) {
@@ -93,7 +88,7 @@ public class SparkTempViewProvider implements TempViewProvider {
   @Override
   public void runQuery(String sqlText) {
     try {
-      this.sqlContext.sql(sqlText).show(Integer.MAX_VALUE, false);
+      this.sparkSession.sql(sqlText).show(Integer.MAX_VALUE, false);
     } catch (Throwable ex) {
       // log full stack trace and rethrow. Without this its difficult to debug failures, if any
       LOG.error("unable to read ", ex);
@@ -104,7 +99,7 @@ public class SparkTempViewProvider implements TempViewProvider {
   @Override
   public void deleteTable(String tableName) {
     try {
-      sqlContext.sql("DROP TABLE IF EXISTS " + tableName);
+      this.sparkSession.sql("DROP TABLE IF EXISTS " + tableName);
     } catch (Throwable ex) {
       // log full stack trace and rethrow. Without this its difficult to debug failures, if any
       LOG.error("unable to initialize spark context ", ex);

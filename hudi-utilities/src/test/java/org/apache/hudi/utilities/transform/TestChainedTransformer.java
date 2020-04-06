@@ -66,7 +66,7 @@ public class TestChainedTransformer {
         });
     Row r1 = RowFactory.create("100");
     Row r2 = RowFactory.create("200");
-    Dataset<Row> original = sparkSession.sqlContext().createDataFrame(Arrays.asList(r1, r2), schema);
+    Dataset<Row> original = sparkSession.createDataFrame(Arrays.asList(r1, r2), schema);
 
     Transformer t1 = (jsc, sparkSession, dataset, properties) -> dataset.withColumnRenamed("foo", "bar");
     Transformer t2 = (jsc, sparkSession, dataset, properties) -> dataset.withColumn("bar", dataset.col("bar").cast(IntegerType));

@@ -37,7 +37,7 @@ import org.apache.spark.sql.SaveMode;
 import org.apache.spark.sql.SparkSession;
 import org.apache.spark.sql.streaming.DataStreamWriter;
 import org.apache.spark.sql.streaming.OutputMode;
-import org.apache.spark.sql.streaming.ProcessingTime;
+import org.apache.spark.sql.streaming.Trigger;
 
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -193,7 +193,7 @@ public class HoodieJavaStreamingApp {
         // pass any path glob, can include hoodie & non-hoodie
         // datasets
         .load(tablePath + "/*/*/*/*");
-    hoodieROViewDF.registerTempTable("hoodie_ro");
+    hoodieROViewDF.createOrReplaceTempView("hoodie_ro");
     spark.sql("describe hoodie_ro").show();
     // all trips whose fare amount was greater than 2.
     spark.sql("select fare.amount, begin_lon, begin_lat, timestamp from hoodie_ro where fare.amount > 2.0").show();
@@ -232,7 +232,7 @@ public class HoodieJavaStreamingApp {
         .outputMode(OutputMode.Append());
 
     updateHiveSyncConfig(writer);
-    writer.trigger(new ProcessingTime(500)).start(tablePath).awaitTermination(streamingDurationInMs);
+    writer.trigger(Trigger.ProcessingTime(500)).start(tablePath).awaitTermination(streamingDurationInMs);
   }
 
   /**

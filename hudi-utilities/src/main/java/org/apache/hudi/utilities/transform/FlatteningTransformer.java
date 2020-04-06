@@ -49,7 +49,7 @@ public class FlatteningTransformer implements Transformer {
     // tmp table name doesn't like dashes
     String tmpTable = TMP_TABLE.concat(UUID.randomUUID().toString().replace("-", "_"));
     LOG.info("Registering tmp table : " + tmpTable);
-    rowDataset.registerTempTable(tmpTable);
+    rowDataset.createOrReplaceTempView(tmpTable);
     return sparkSession.sql("select " + flattenSchema(rowDataset.schema(), null) + " from " + tmpTable);
   }
 
