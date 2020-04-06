@@ -39,6 +39,8 @@
     <module>hudi-cli</module>
     <module>hudi-client</module>
     <module>hudi-hadoop-mr</module>
+    <module>hudi-hive2</module>
+    <module>hudi-hive3</module>
     <module>hudi-hive-sync</module>
     <module>hudi-spark</module>
     <module>hudi-timeline-service</module>
@@ -89,7 +91,10 @@
     <joda.version>2.9.9</joda.version>
     <hadoop.version>2.7.3</hadoop.version>
     <hive.groupid>org.apache.hive</hive.groupid>
-    <hive.version>2.3.1</hive.version>
+    <hive.main.version>2</hive.main.version>
+    <hive.version>${hive2.version}</hive.version>
+    <hive2.version>2.3.1</hive2.version>
+    <hive3.version>3.1.2</hive3.version>
     <hive.exec.classifier>core</hive.exec.classifier>
     <metrics.version>4.1.1</metrics.version>
     <spark.version>2.4.4</spark.version>
@@ -1053,6 +1058,9 @@
     <profile>
       <id>scala-2.11</id>
     </profile>
+    <profile>
+      <id>hive-2</id>
+    </profile>
 
     <profile>
       <id>scala-2.12</id>
@@ -1091,6 +1099,18 @@
           </plugin>
         </plugins>
       </build>
+    </profile>
+    <profile>
+      <id>hive-3</id>
+      <properties>
+        <hive.main.version>3</hive.main.version>
+        <hive.version>${hive3.version}</hive.version>
+      </properties>
+      <activation>
+        <property>
+          <name>hive-3</name>
+        </property>
+      </activation>
     </profile>
   </profiles>
 
