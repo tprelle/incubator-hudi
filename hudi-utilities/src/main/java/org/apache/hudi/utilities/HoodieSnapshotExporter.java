@@ -47,11 +47,11 @@ import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaSparkContext;
-import org.apache.spark.sql.Column;
 import org.apache.spark.sql.DataFrameWriter;
 import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Column;
 import org.apache.spark.sql.Row;
-import org.apache.spark.sql.SQLContext;
+import org.apache.spark.sql.SparkSession;
 import org.apache.spark.sql.SaveMode;
 
 import java.io.IOException;
@@ -182,7 +182,7 @@ public class HoodieSnapshotExporter {
             .map(HoodieBaseFile::getPath).iterator())
         .toLocalIterator();
 
-    Dataset<Row> sourceDataset = new SQLContext(jsc).read().parquet(JavaConversions.asScalaIterator(exportingFilePaths).toSeq());
+    Dataset<Row> sourceDataset = SparkSession.builder().sparkContext(jsc.sc()).getOrCreate().sqlContext().read().parquet(JavaConversions.asScalaIterator(exportingFilePaths).toSeq());
     partitioner.partition(sourceDataset)
         .format(cfg.outputFormat)
         .mode(SaveMode.Overwrite)

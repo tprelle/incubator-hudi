@@ -37,7 +37,7 @@ import org.apache.hudi.utilities.HoodieCompactor;
 
 import org.apache.log4j.Logger;
 import org.apache.spark.api.java.JavaSparkContext;
-import org.apache.spark.sql.SQLContext;
+import org.apache.spark.sql.SparkSession;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -264,7 +264,7 @@ public class SparkMain {
 
   private static int deduplicatePartitionPath(JavaSparkContext jsc, String duplicatedPartitionPath,
       String repairedOutputPath, String basePath) {
-    DedupeSparkJob job = new DedupeSparkJob(basePath, duplicatedPartitionPath, repairedOutputPath, new SQLContext(jsc),
+    DedupeSparkJob job = new DedupeSparkJob(basePath, duplicatedPartitionPath, repairedOutputPath, SparkSession.builder().sparkContext(jsc.sc()).getOrCreate(),
         FSUtils.getFs(basePath, jsc.hadoopConfiguration()));
     job.fixDuplicates(true);
     return 0;

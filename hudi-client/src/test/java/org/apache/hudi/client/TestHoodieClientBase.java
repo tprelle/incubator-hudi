@@ -50,7 +50,7 @@ import org.apache.hadoop.fs.Path;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.sql.SQLContext;
+import org.apache.spark.sql.SparkSession;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 
@@ -98,7 +98,7 @@ public class TestHoodieClientBase extends HoodieClientTestHarness {
   }
 
   protected HoodieReadClient getHoodieReadClient(String basePath) {
-    return new HoodieReadClient(jsc, basePath, SQLContext.getOrCreate(jsc.sc()));
+    return new HoodieReadClient(jsc, basePath, SparkSession.builder().sparkContext(jsc.sc()).getOrCreate().sqlContext());
   }
 
   /**

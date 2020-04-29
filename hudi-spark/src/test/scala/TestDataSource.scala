@@ -22,7 +22,7 @@ import org.apache.hudi.config.HoodieWriteConfig
 import org.apache.hudi.{DataSourceReadOptions, DataSourceWriteOptions, HoodieDataSourceHelpers}
 import org.apache.spark.sql._
 import org.apache.spark.sql.functions.col
-import org.apache.spark.sql.streaming.{OutputMode, ProcessingTime}
+import org.apache.spark.sql.streaming.{OutputMode, Trigger}
 import org.junit.jupiter.api.Assertions.{assertEquals, assertTrue}
 import org.junit.jupiter.api.io.TempDir
 import org.junit.jupiter.api.{BeforeEach, Test}
@@ -234,7 +234,7 @@ class TestDataSource {
         .writeStream
         .format("org.apache.hudi")
         .options(commonOpts)
-        .trigger(new ProcessingTime(100))
+        .trigger(Trigger.ProcessingTime(100))
         .option("checkpointLocation", basePath + "/checkpoint")
         .outputMode(OutputMode.Append)
         .start(destPath)

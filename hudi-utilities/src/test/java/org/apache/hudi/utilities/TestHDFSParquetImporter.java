@@ -42,6 +42,7 @@ import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SQLContext;
 
+import org.apache.spark.sql.SparkSession;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -153,7 +154,7 @@ public class TestHDFSParquetImporter implements Serializable {
         isCommitFilePresent = isCommitFilePresent || f.getPath().toString().endsWith(HoodieTimeline.COMMIT_EXTENSION);
 
         if (f.getPath().toString().endsWith("parquet")) {
-          SQLContext sc = new SQLContext(jsc);
+          SQLContext sc = SparkSession.builder().sparkContext(jsc.sc()).getOrCreate().sqlContext();
           String partitionPath = f.getPath().getParent().toString();
           long count = sc.read().parquet(f.getPath().toString()).count();
           if (!recordCounts.containsKey(partitionPath)) {
@@ -189,7 +190,7 @@ public class TestHDFSParquetImporter implements Serializable {
   public void testImportWithInsert() throws IOException, ParseException {
     try (JavaSparkContext jsc = getJavaSparkContext()) {
       insert(jsc);
-      SQLContext sqlContext = new SQLContext(jsc);
+      SQLContext sqlContext = SparkSession.builder().sparkContext(jsc.sc()).getOrCreate().sqlContext();
       Dataset<Row> ds = HoodieClientTestUtils.read(jsc, basePath + "/testTarget", sqlContext, dfs, basePath + "/testTarget/*/*/*/*");
 
       List<Row> readData = ds.select("timestamp", "_row_key", "rider", "driver", "begin_lat", "begin_lon", "end_lat", "end_lon").collectAsList();
@@ -239,7 +240,7 @@ public class TestHDFSParquetImporter implements Serializable {
       expectData.addAll(upsertData);
 
       // read latest data
-      SQLContext sqlContext = new SQLContext(jsc);
+      SQLContext sqlContext = SparkSession.builder().sparkContext(jsc.sc()).getOrCreate().sqlContext();
       Dataset<Row> ds = HoodieClientTestUtils.read(jsc, basePath + "/testTarget", sqlContext, dfs, basePath + "/testTarget/*/*/*/*");
 
       List<Row> readData = ds.select("timestamp", "_row_key", "rider", "driver", "begin_lat", "begin_lon", "end_lat", "end_lon").collectAsList();

@@ -31,7 +31,7 @@ import org.apache.hudi.config.{HoodieIndexConfig, HoodieStorageConfig}
 import org.apache.hudi.io.storage.{HoodieParquetConfig, HoodieParquetWriter}
 import org.apache.parquet.avro.AvroSchemaConverter
 import org.apache.parquet.hadoop.metadata.CompressionCodecName
-import org.apache.spark.sql.{DataFrame, SQLContext}
+import org.apache.spark.sql.{DataFrame, SQLContext, SparkSession}
 
 import scala.collection.JavaConversions._
 import scala.collection.mutable._
@@ -62,7 +62,7 @@ object SparkHelpers {
 /**
   * Bunch of Spark Shell/Scala stuff useful for debugging
   */
-class SparkHelper(sqlContext: SQLContext, fs: FileSystem) {
+class SparkHelper(sparkSession: SparkSession, fs: FileSystem) {
 
 
   /**
@@ -80,7 +80,7 @@ class SparkHelper(sqlContext: SQLContext, fs: FileSystem) {
     * @return
     */
   def getRowKeyDF(file: String): DataFrame = {
-    sqlContext.read.parquet(file).select(s"`${HoodieRecord.RECORD_KEY_METADATA_FIELD}`")
+    sparkSession.read.parquet(file).select(s"`${HoodieRecord.RECORD_KEY_METADATA_FIELD}`")
   }
 
 
@@ -101,9 +101,9 @@ class SparkHelper(sqlContext: SQLContext, fs: FileSystem) {
     * Number of keys in a given file
     *
     * @param file
-    * @param sqlContext
+    * @param sparkSession
     */
-  def getKeyCount(file: String, sqlContext: org.apache.spark.sql.SQLContext) = {
+  def getKeyCount(file: String, sparkSession: org.apache.spark.sql.SparkSession) = {
     val keyCount = getRowKeyDF(file).collect().length
     println(keyCount)
     keyCount
@@ -116,21 +116,21 @@ class SparkHelper(sqlContext: SQLContext, fs: FileSystem) {
     * in the footer
     *
     * @param conf
-    * @param sqlContext
+    * @param sparkSession
     * @param file
     * @return
     */
-  def fileKeysAgainstBF(conf: Configuration, sqlContext: SQLContext, file: String): Boolean = {
+  def fileKeysAgainstBF(conf: Configuration, sparkSession: SparkSession, file: String): Boolean = {
     val bf = ParquetUtils.readBloomFilterFromParquetMetadata(conf, new Path(file))
-    val foundCount = sqlContext.parquetFile(file)
+    val foundCount = sparkSession.read.parquet(file)
       .select(s"`${HoodieRecord.RECORD_KEY_METADATA_FIELD}`")
       .collect().count(r => !bf.mightContain(r.getString(0)))
-    val totalCount = getKeyCount(file, sqlContext)
+    val totalCount = getKeyCount(file, sparkSession)
     println(s"totalCount: $totalCount, foundCount: $foundCount")
     totalCount == foundCount
   }
 
   def getDistinctKeyDF(paths: List[String]): DataFrame = {
-    sqlContext.read.parquet(paths: _*).select(s"`${HoodieRecord.RECORD_KEY_METADATA_FIELD}`").distinct()
+    sparkSession.read.parquet(paths: _*).select(s"`${HoodieRecord.RECORD_KEY_METADATA_FIELD}`").distinct()
   }
 }

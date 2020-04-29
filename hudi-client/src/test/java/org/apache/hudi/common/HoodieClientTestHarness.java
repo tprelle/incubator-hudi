@@ -33,6 +33,7 @@ import org.apache.hadoop.hdfs.DistributedFileSystem;
 import org.apache.hadoop.hdfs.MiniDFSCluster;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.sql.SQLContext;
+import org.apache.spark.sql.SparkSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -105,7 +106,7 @@ public abstract class HoodieClientTestHarness extends HoodieCommonTestHarnessJun
     jsc.setLogLevel("ERROR");
 
     // SQLContext stuff
-    sqlContext = new SQLContext(jsc);
+    sqlContext = SparkSession.builder().sparkContext(jsc.sc()).getOrCreate().sqlContext();
   }
 
   /**

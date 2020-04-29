@@ -121,7 +121,7 @@ public class UtilitiesTestBase {
   public void setup() throws Exception {
     TestDataSource.initDataGen();
     jsc = UtilHelpers.buildSparkContext(this.getClass().getName() + "-hoodie", "local[2]");
-    sqlContext = new SQLContext(jsc);
+    sqlContext = SparkSession.builder().sparkContext(jsc.sc()).getOrCreate().sqlContext();
     sparkSession = SparkSession.builder().config(jsc.getConf()).getOrCreate();
   }
 
